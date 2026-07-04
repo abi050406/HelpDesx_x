@@ -4,7 +4,6 @@ import './App.css';
 
 import { LoginPage } from './components/Auth';
 import { Sidebar, Topbar } from './components/Layout';
-import { AdminDashboard } from './components/Dashboard';
 import RatingsPage from './components/Pages/RatingsPage';
 import { TechnicianDashboard } from './components/Technician';
 import { AssociateDashboard } from './components/Associate';
@@ -36,10 +35,8 @@ function normalizeState(value) {
 
 function parseDateSafe(value) {
   if (!value) return null;
-
   const parsed = new Date(value);
   if (!Number.isNaN(parsed.getTime())) return parsed;
-
   return null;
 }
 
@@ -65,13 +62,10 @@ function hasPlannedTimeConflict(ticket) {
   return now >= windowStart && now <= windowEnd;
 }
 
-
-
 function createIdempotencyKey(scope = 'action') {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `${scope}-${crypto.randomUUID()}`;
   }
-
   return `${scope}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -115,24 +109,20 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
       setError('Ingresa tu contraseña temporal actual.');
       return;
     }
-
     if (form.newPassword.trim().length < 8) {
       setError('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
-
     if (form.newPassword !== form.confirmPassword) {
       setError('La confirmación no coincide con la nueva contraseña.');
       return;
     }
-
     if (form.currentPassword === form.newPassword) {
       setError('La nueva contraseña debe ser diferente a la temporal.');
       return;
     }
 
     setSaving(true);
-
     try {
       const response = await axios.post(`${AUTH_API_URL}/change-password`, {
         currentPassword: form.currentPassword,
@@ -153,7 +143,6 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
         mustChangePassword: false,
         must_change_password: false,
       };
-
       onChanged(updatedUser, response.data?.token);
     } catch (requestError) {
       setError(getApiErrorMessage(requestError, 'No se pudo cambiar la contraseña.'));
@@ -171,7 +160,6 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
         <p>
           Hola, <strong>{currentUser?.name || currentUser?.full_name || currentUser?.username}</strong>. Antes de usar HelpDesk_X debes reemplazar la contraseña temporal asignada por el administrador.
         </p>
-
         <form className="password-gate-form" onSubmit={submit}>
           <label>
             Contraseña temporal actual
@@ -183,7 +171,6 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
               disabled={saving}
             />
           </label>
-
           <label>
             Nueva contraseña
             <input
@@ -194,7 +181,6 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
               disabled={saving}
             />
           </label>
-
           <label>
             Confirmar nueva contraseña
             <input
@@ -205,14 +191,11 @@ function ChangePasswordGate({ currentUser, authToken, onChanged, onLogout }) {
               disabled={saving}
             />
           </label>
-
           {error && <div className="login-error">{error}</div>}
-
           <button className="login-submit" type="submit" disabled={saving}>
             {saving ? 'Actualizando...' : 'Guardar nueva contraseña'}
           </button>
         </form>
-
         <button className="password-gate-logout" type="button" onClick={onLogout} disabled={saving}>
           Cerrar sesión
         </button>
@@ -252,14 +235,11 @@ function App() {
   const [actionLocks, setActionLocks] = useState({});
 
   const role = currentUser?.role || 'guest';
-
   const isLocked = (key) => Boolean(actionLocks[key]);
 
   const withActionLock = async (key, task) => {
     if (actionLocks[key]) return null;
-
     setActionLocks((current) => ({ ...current, [key]: true }));
-
     try {
       return await task();
     } finally {
@@ -273,11 +253,9 @@ function App() {
 
   const authHeaders = ({ idempotent = false, scope = 'action' } = {}) => {
     const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-
     if (idempotent) {
       headers['Idempotency-Key'] = createIdempotencyKey(scope);
     }
-
     return headers;
   };
 
@@ -286,7 +264,6 @@ function App() {
       const response = await axios.get(API_URL, {
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       });
-
       const rows = Array.isArray(response.data) ? response.data : [];
       const normalized = rows.map(normalizeTicket);
 
@@ -308,12 +285,10 @@ function App() {
 
   const loadCatalog = async () => {
     if (!authToken) return;
-
     try {
       const response = await axios.get(`${API_URL}/catalog`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-
       setCatalog(response.data || []);
     } catch (error) {
       console.warn('No se pudo cargar catálogo:', error.message);
@@ -322,12 +297,10 @@ function App() {
 
   const loadTechnicianDirectory = async () => {
     if (!authToken || role !== 'admin' || isPasswordChangeRequired(currentUser)) return;
-
     try {
       const response = await axios.get(`${ADMIN_API_URL}/directory`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-
       setTechnicianDirectory(response.data);
     } catch (error) {
       setTechnicianDirectory({ users: [], presence: [] });
@@ -336,9 +309,7 @@ function App() {
 
   const refreshOperationalData = async ({ silent = true } = {}) => {
     if (!currentUser || !authToken || isPasswordChangeRequired(currentUser)) return;
-
     await loadTickets({ silent });
-
     if (role === 'admin') {
       await loadTechnicianDirectory();
     }
@@ -351,12 +322,12 @@ function App() {
     } else {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, authToken]);
 
   useEffect(() => {
     loadTechnicianDirectory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, role]);
 
   useEffect(() => {
@@ -369,11 +340,8 @@ function App() {
     const interval = setInterval(refreshSilently, 15000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshSilently();
-      }
+      if (document.visibilityState === 'visible') refreshSilently();
     };
-
     const handleWindowFocus = () => {
       refreshSilently();
     };
@@ -386,14 +354,13 @@ function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleWindowFocus);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, authToken, role]);
 
   useEffect(() => {
     if (!authToken || isPasswordChangeRequired(currentUser)) return undefined;
 
     loadCatalog();
-
     const socket = createHelpdeskSocket(authToken);
     const refresh = () => refreshOperationalData({ silent: true });
 
@@ -427,12 +394,10 @@ function App() {
       if (currentUser?.role === 'tech' && Number(presence.tecnico_id) === Number(currentUser.id)) {
         setTechStatus(presence.estado);
       }
-
       setTechnicianDirectory((current) => ({
         ...current,
         presence: [...current.presence.filter((item) => item.tecnico_id !== presence.tecnico_id), presence],
       }));
-
       refresh();
     });
 
@@ -442,7 +407,7 @@ function App() {
       if (heartbeat) clearInterval(heartbeat);
       socket.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
@@ -461,7 +426,6 @@ function App() {
     }
   }, [tickets, role]);
 
-
   useEffect(() => {
     if (!criticalTicket) return undefined;
 
@@ -471,7 +435,6 @@ function App() {
     const alertFavicon = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#ef4444"/><text x="32" y="44" font-size="38" text-anchor="middle" fill="white">!</text></svg>')}`;
 
     let flip = false;
-
     const titleTimer = setInterval(() => {
       flip = !flip;
       document.title = flip ? '🚨 NUEVO TICKET CRÍTICO' : originalTitle;
@@ -481,10 +444,8 @@ function App() {
     const beep = () => {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
-
       const ctx = new AudioContext();
       const oscillator = ctx.createOscillator();
-
       oscillator.frequency.value = 880;
       oscillator.connect(ctx.destination);
       oscillator.start();
@@ -505,7 +466,6 @@ function App() {
 
   useEffect(() => {
     if (!toast) return undefined;
-
     const timer = setTimeout(() => setToast(''), 3600);
     return () => clearTimeout(timer);
   }, [toast]);
@@ -522,10 +482,7 @@ function App() {
       });
 
       const { token, user } = response.data;
-
-      if (!token || !user) {
-        throw new Error('Respuesta de autenticación incompleta.');
-      }
+      if (!token || !user) throw new Error('Respuesta de autenticación incompleta.');
 
       localStorage.setItem('helpdesk_x_token', token);
       localStorage.setItem('helpdesk_x_user', JSON.stringify(user));
@@ -558,7 +515,6 @@ function App() {
 
     localStorage.removeItem('helpdesk_x_token');
     localStorage.removeItem('helpdesk_x_user');
-
     setAuthToken('');
     setCurrentUser(null);
     setActivePanel('dashboard');
@@ -568,15 +524,12 @@ function App() {
     setToast('Sesión cerrada correctamente');
   };
 
-
   const handlePasswordChanged = (updatedUser, nextToken) => {
     const finalToken = nextToken || authToken;
-
     if (nextToken) {
       localStorage.setItem('helpdesk_x_token', nextToken);
       setAuthToken(nextToken);
     }
-
     localStorage.setItem('helpdesk_x_user', JSON.stringify(updatedUser));
     setCurrentUser(updatedUser);
     setCredentials({ username: '', password: '' });
@@ -619,12 +572,10 @@ function App() {
 
   const categoryData = useMemo(() => {
     const map = { Software: 0, Hardware: 0, Redes: 0, Accesos: 0, Otros: 0 };
-
     tickets.forEach((ticket) => {
       const key = map[ticket.categoria] !== undefined ? ticket.categoria : 'Otros';
       map[key] += 1;
     });
-
     return map;
   }, [tickets]);
 
@@ -633,27 +584,22 @@ function App() {
       handleLogout();
       return;
     }
-
     if (panelId === 'tickets' && role !== 'admin') {
       setActivePanel('dashboard');
       return;
     }
-
     if (['dashboard', 'tickets', 'myTickets', 'waiting', 'planned', 'reports', 'technicians', 'associates'].includes(panelId)) {
       refreshOperationalData({ silent: true });
     }
-
     setActivePanel(panelId);
   };
 
   const resolveTicket = async () => {
     if (!selectedTicket?.id) return;
-
     if (role === 'tech') {
       await handleTechnicianAction(selectedTicket.id, 'resolve');
       return;
     }
-
     setShowResolvedModal(true);
     setToast(`Ticket #${String(selectedTicket.id).padStart(6, '0')} marcado como resuelto`);
   };
@@ -703,7 +649,6 @@ function App() {
 
   const handleTechnicianAction = async (ticketId, action, payload = {}) => {
     const lockKey = `ticket-${ticketId}-${action}`;
-
     return withActionLock(lockKey, async () => {
       const actionLabel = {
         start: 'iniciado',
@@ -723,7 +668,6 @@ function App() {
         });
 
         const updatedTicket = normalizeTicket(response.data.ticket || response.data);
-
         setTickets((prev) => prev.map((ticket) => ticket.id === updatedTicket.id ? updatedTicket : ticket));
         setSelectedId(updatedTicket.id);
         setToast(`Ticket #${String(updatedTicket.id).padStart(6, '0')} ${actionLabel}`);
@@ -749,7 +693,6 @@ function App() {
     }, {
       headers: authHeaders({ idempotent: true, scope: `message-${ticketId}` }),
     });
-
     setToast('Mensaje agregado a la bitácora.');
     setTimeout(() => refreshOperationalData({ silent: true }), 250);
   };
@@ -759,7 +702,6 @@ function App() {
       setPresenceRequest(nextStatus);
       return;
     }
-
     try {
       await axios.put(`${PRESENCE_API_URL}/me`, {
         estado: nextStatus,
@@ -767,7 +709,6 @@ function App() {
       }, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-
       setTechStatus(nextStatus);
       setToast(`Estado actualizado a ${nextStatus}`);
       setTimeout(() => refreshOperationalData({ silent: true }), 250);
@@ -784,7 +725,6 @@ function App() {
 
   const submitFeedback = async (feedbackOrRating, maybeComment) => {
     if (!selectedTicket?.id) return;
-
     const payload = typeof feedbackOrRating === 'object'
       ? feedbackOrRating
       : { score: feedbackOrRating, comment: maybeComment, resolved: true };
@@ -799,7 +739,6 @@ function App() {
       }, {
         headers: authHeaders({ idempotent: true, scope: `feedback-${selectedTicket.id}` }),
       });
-
       setShowResolvedModal(false);
       await refreshOperationalData({ silent: true });
       setToast('Gracias. El ticket fue cerrado.');
@@ -808,7 +747,6 @@ function App() {
 
   const persistFailure = async (persistPayload) => {
     if (!selectedTicket?.id) return;
-
     const comment = typeof persistPayload === 'object' ? persistPayload.comment : persistPayload;
 
     return withActionLock(`persist-${selectedTicket.id}`, async () => {
@@ -819,7 +757,6 @@ function App() {
       }, {
         headers: authHeaders({ idempotent: true, scope: `persist-${selectedTicket.id}` }),
       });
-
       setShowResolvedModal(false);
       await refreshOperationalData({ silent: true });
       setToast('El ticket regresó a En Progreso.');
@@ -842,7 +779,6 @@ function App() {
 
     const activeTicket = tickets.find((ticket) => {
       const state = normalizeState(ticket.estado);
-
       return (
         state.includes('abierto') ||
         state.includes('nuevo') ||
@@ -871,14 +807,11 @@ function App() {
         ticket: plannedConflict,
       };
     }
-
     return null;
   };
 
-
   const applyTicketUpdate = (rawTicket) => {
     if (!rawTicket) return null;
-
     const updatedTicket = normalizeTicket(rawTicket);
 
     setTickets((prev) => {
@@ -893,13 +826,11 @@ function App() {
 
   const adminRetryAssignment = async (ticketId) => {
     if (!ticketId || role !== 'admin') return null;
-
     return withActionLock(`admin-retry-${ticketId}`, async () => {
       try {
         const response = await axios.post(`${ADMIN_API_URL}/tickets/${ticketId}/reassign`, {}, {
           headers: authHeaders({ idempotent: true, scope: `admin-retry-${ticketId}` }),
         });
-
         const updatedTicket = applyTicketUpdate(response.data?.ticket || response.data?.data || response.data);
         await refreshOperationalData({ silent: true });
         setToast(updatedTicket?.tecnico_id || updatedTicket?.tecnico !== 'Sin asignar'
@@ -916,7 +847,6 @@ function App() {
 
   const adminAssignTicket = async (ticketId, technicianId, reason = 'Asignación manual por administrador') => {
     if (!ticketId || !technicianId || role !== 'admin') return null;
-
     return withActionLock(`admin-assign-${ticketId}`, async () => {
       try {
         const response = await axios.post(`${ADMIN_API_URL}/tickets/${ticketId}/assign`, {
@@ -928,7 +858,6 @@ function App() {
         }, {
           headers: authHeaders({ idempotent: true, scope: `admin-assign-${ticketId}` }),
         });
-
         const updatedTicket = applyTicketUpdate(response.data?.ticket || response.data?.data || response.data);
         await refreshOperationalData({ silent: true });
         setToast(`Ticket #${String(ticketId).padStart(6, '0')} asignado manualmente.`);
@@ -943,12 +872,10 @@ function App() {
 
   const adminSimulateAssignment = async (ticketId) => {
     if (!ticketId || role !== 'admin') return null;
-
     try {
       const response = await axios.post(`${ADMIN_API_URL}/tickets/${ticketId}/simulate-assignment`, {}, {
         headers: authHeaders({ idempotent: true, scope: `admin-simulate-${ticketId}` }),
       });
-
       return response.data;
     } catch (error) {
       const message = getApiErrorMessage(error, 'No se pudo simular la asignación.');
@@ -959,261 +886,172 @@ function App() {
 
   const openCreateTicketModal = () => {
     const blocker = getCreateTicketBlocker();
-
     if (blocker) {
       setToast(blocker.message);
       return;
     }
-
     setShowCreateModal(true);
   };
 
-  const renderPanel = () => {
-    if (activePanel === 'dashboard') {
-      if (role === 'admin') {
+  // Renderizador unificado para el Administrador utilizando los componentes modulares de Page
+  const renderAdminPanels = () => {
+    switch (activePanel) {
+      case 'dashboard':
+      case 'tickets':
         return (
-          <AdminDashboard
+          <TicketsPage
             tickets={tickets}
-            metrics={metrics}
-            categoryData={categoryData}
-            selectedTicket={selectedTicket}
+            onSelectTicket={openTicketFromList}
             selectedId={selectedId}
-            setSelectedId={setSelectedId}
-            resolveTicket={resolveTicket}
-            loading={loading}
-            technicianDirectory={technicianDirectory}
-            authToken={authToken}
+            selectedTicket={selectedTicket}
             onRetryAssignment={adminRetryAssignment}
             onAssignTicket={adminAssignTicket}
             onSimulateAssignment={adminSimulateAssignment}
+            technicianDirectory={technicianDirectory}
           />
         );
-      }
-
-      if (role === 'tech') {
-        return (
-          <TechnicianDashboard
-            tickets={tickets}
-            currentUser={currentUser}
-            techStatus={techStatus}
-            selectedTicket={selectedTicket}
-            setSelectedId={setSelectedId}
-            setToast={setToast}
-            onTicketAction={handleTechnicianAction}
-            onSendMessage={sendTicketMessage}
-            actionLocks={actionLocks}
-          />
-        );
-      }
-
-      return (
-        <AssociateDashboard
-          tickets={tickets}
-          onOpenResolved={openResolvedTicket}
-          onOpenTicket={openAssociateTicket}
-          setShowCreateModal={openCreateTicketModal}
-        />
-      );
+      case 'technicians':
+        return <TechniciansPage directory={technicianDirectory} />;
+      case 'associates':
+        return <AssociatesPage />;
+      case 'ratings':
+        return <RatingsPage />;
+      case 'reports':
+        return <ReportsPage metrics={metrics} categoryData={categoryData} />;
+      case 'auditLog':
+        return <AuditLogPage />;
+      case 'categories':
+        return <CategoriesPage catalog={catalog} />;
+      case 'wiki':
+        return <WikiPage />;
+      case 'settings':
+        return <SettingsPage pushEnabled={pushEnabled} onEnablePush={enablePushNotifications} />;
+      case 'profile':
+        return <ProfilePage user={currentUser} />;
+      case 'chat':
+        return <ChatPage user={currentUser} />;
+      case 'news':
+        return <NewsPage />;
+      default:
+        return <TicketsPage tickets={tickets} onSelectTicket={openTicketFromList} selectedId={selectedId} />;
     }
-
-    if (['tickets', 'myTickets', 'assignedTickets', 'waiting', 'planned'].includes(activePanel)) {
-      if (activePanel === 'tickets' && role !== 'admin') {
-        return (
-          <div className="panel empty-state-card">
-            <strong>Vista restringida.</strong>
-            <p>Los tickets generales están disponibles únicamente para administración.</p>
-          </div>
-        );
-      }
-
-      const titles = {
-        tickets: 'Tickets Globales',
-        myTickets: role === 'associate' ? 'Mis Solicitudes' : 'Mis Tickets',
-        assignedTickets: 'Tickets Asignados',
-        waiting: 'Tickets en Espera',
-        planned: 'Tickets Planificados',
-      };
-
-      const filtered = activePanel === 'waiting'
-        ? tickets.filter(t => String(t.estado || '').toLowerCase().includes('espera'))
-        : activePanel === 'planned'
-          ? tickets.filter(t => String(t.estado || '').toLowerCase().includes('plan'))
-          : tickets;
-
-      return (
-      <TicketsPage
-        tickets={filtered}
-        title={titles[activePanel]}
-        role={role}
-        authToken={authToken}
-        technicians={(technicianDirectory.users || []).filter((user) => ['tech', 'tecnico'].includes(String(user.role || '').toLowerCase()))}
-        onSelectTicket={role === 'associate' ? openAssociateTicket : openTicketFromList}
-        showCreate={role === 'associate'}
-        onCreate={openCreateTicketModal}
-        onRetryAssignment={adminRetryAssignment}
-        onAssignTicket={adminAssignTicket}
-        onSimulateAssignment={adminSimulateAssignment}
-      />
-      );
-    }
-
-    if (activePanel === 'createTicket') return <CreateTicketPage onOpenModal={openCreateTicketModal} />;
-    if (activePanel === 'technicians') return <TechniciansPage authToken={authToken} tickets={tickets} onUpdated={() => refreshOperationalData({ silent: true })} />;
-    if (activePanel === 'associates') return <AssociatesPage authToken={authToken} />;
-    if (activePanel === 'categories') return <CategoriesPage />;
-    if (activePanel === 'wiki') return <WikiPage />;
-    if (activePanel === 'reports') return <ReportsPage authToken={authToken} />;
-    if (activePanel === 'ratings') return <RatingsPage authToken={authToken} />;
-    if (activePanel === 'settings') return <SettingsPage />;
-    if (activePanel === 'audit') return <AuditLogPage authToken={authToken} />;
-    if (activePanel === 'chat') {
-      return (
-        <ChatPage
-          ticket={selectedTicket}
-          authToken={authToken}
-          currentUser={currentUser}
-          role={role}
-        />
-      );
-    }
-    if (activePanel === 'news') return <NewsPage />;
-    if (activePanel === 'profile') return <ProfilePage role={role} currentUser={currentUser} />;
-
-   return <TicketsPage
-      tickets={tickets}
-      title="Módulo"
-      role={role}
-      authToken={authToken}
-      technicians={(technicianDirectory.users || []).filter((user) => ['tech', 'tecnico'].includes(String(user.role || '').toLowerCase()))}
-      onSelectTicket={openTicketFromList}
-      onRetryAssignment={adminRetryAssignment}
-      onAssignTicket={adminAssignTicket}
-      onSimulateAssignment={adminSimulateAssignment}
-    />;
   };
 
-  if (!currentUser) {
+  if (loading) {
     return (
-      <>
-        {toast && <div className="toast">● {toast}</div>}
-        <LoginPage
-          credentials={credentials}
-          setCredentials={setCredentials}
-          onLogin={handleLogin}
-          loginError={loginError}
-          authLoading={authLoading}
-        />
-      </>
+      <div className="app-loading-screen">
+        <div className="app-spinner" />
+        <p>Cargando HelpDesk_X...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser || !authToken) {
+    return (
+      <LoginPage
+        credentials={credentials}
+        onChangeCredentials={setCredentials}
+        onLogin={handleLogin}
+        error={loginError}
+        loading={authLoading}
+      />
     );
   }
 
   if (isPasswordChangeRequired(currentUser)) {
     return (
-      <>
-        {toast && <div className="toast">● {toast}</div>}
-        <ChangePasswordGate
-          currentUser={currentUser}
-          authToken={authToken}
-          onChanged={handlePasswordChanged}
-          onLogout={handleLogout}
-        />
-      </>
+      <ChangePasswordGate
+        currentUser={currentUser}
+        authToken={authToken}
+        onChanged={handlePasswordChanged}
+        onLogout={handleLogout}
+      />
     );
   }
 
   return (
-    <div className={`app-shell role-${role} ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showResolvedModal ? 'feedback-locked' : ''}`}>
-      {toast && <div className="toast">● {toast}</div>}
-
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <Sidebar
         role={role}
         activePanel={activePanel}
+        collapsed={sidebarCollapsed}
         onNavigate={navigateTo}
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-        tickets={tickets}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-
-      <main className="main-layout">
+      <div className="app-main-content">
         <Topbar
-          role={role}
-          activePanel={activePanel}
-          currentUser={currentUser}
-          onLogout={handleLogout}
+          user={currentUser}
           techStatus={techStatus}
-          setTechStatus={updateTechnicianStatus}
-          pushEnabled={pushEnabled}
-          onEnablePush={enablePushNotifications}
-          tickets={tickets}
+          onStatusChange={updateTechnicianStatus}
+          onLogout={handleLogout}
+          onNavigate={navigateTo}
         />
+        
+        <main className="app-panel-viewport">
+          {role === 'associate' && (
+            <AssociateDashboard
+              activePanel={activePanel}
+              tickets={tickets}
+              onCreateClick={openCreateTicketModal}
+              onTicketClick={openAssociateTicket}
+              onOpenFeedback={openResolvedTicket}
+              onNavigate={navigateTo}
+            />
+          )}
 
-        <div className="view-stage">{renderPanel()}</div>
-      </main>
+          {role === 'tech' && (
+            <TechnicianDashboard
+              activePanel={activePanel}
+              tickets={tickets}
+              selectedId={selectedId}
+              selectedTicket={selectedTicket}
+              techStatus={techStatus}
+              onSelectTicket={setSelectedId}
+              onAction={handleTechnicianAction}
+              onSendMessage={sendTicketMessage}
+              onStatusChange={updateTechnicianStatus}
+              onNavigate={navigateTo}
+            />
+          )}
 
-      {showResolvedModal && role === 'associate' && (
+          {role === 'admin' && renderAdminPanels()}
+        </main>
+      </div>
+
+      {showResolvedModal && (
         <ResolvedModal
           ticket={selectedTicket}
-          onFeedback={submitFeedback}
-          onPersist={persistFailure}
           onClose={() => setShowResolvedModal(false)}
-        />
-      )}
-
-      {showTicketDetails && role === 'associate' && selectedTicket && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <div className="resolved-modal ticket-details-modal">
-            <button className="modal-close" type="button" aria-label="Cerrar detalles" onClick={() => setShowTicketDetails(false)}>×</button>
-            <span className={`status-badge ${String(selectedTicket.estado || '').replaceAll(' ', '-')}`}>{selectedTicket.estado}</span>
-            <h2>Ticket #{String(selectedTicket.id).padStart(6, '0')}</h2>
-            <h3>{selectedTicket.titulo}</h3>
-            <p>{selectedTicket.descripcion}</p>
-            <div className="ticket-focus-meta">
-              <div><span>Categoría</span><b>{selectedTicket.categoria}</b></div>
-            
-              <div><span>Técnico</span><b>{selectedTicket.tecnico}</b></div>
-              <div><span>Actualizado</span><b>{selectedTicket.fecha} {selectedTicket.hora}</b></div>
-              {String(selectedTicket.estado || '').toLowerCase().includes('plan') && (
-                <div>
-                  <span>Planificado para</span>
-                  <b>
-                    {selectedTicket.fecha_planificada_label ||
-                      selectedTicket.fecha_planificada ||
-                      selectedTicket.planned_at ||
-                      selectedTicket.scheduledAt ||
-                      'Fecha pendiente'}
-                  </b>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {presenceRequest && (
-        <PresenceReasonModal
-          status={presenceRequest}
-          onCancel={() => setPresenceRequest(null)}
-          onConfirm={confirmPresence}
-        />
-      )}
-
-      {criticalTicket && role === 'tech' && (
-        <CriticalAlert
-          ticket={criticalTicket}
-          onStart={() => handleTechnicianAction(criticalTicket.id, 'start')}
+          onSubmitFeedback={submitFeedback}
+          onPersistFailure={persistFailure}
         />
       )}
 
       {showCreateModal && (
         <CreateTicketModal
-          onClose={() => setShowCreateModal(false)}
-          setToast={setToast}
-          onCreateTicket={createTicket}
-          currentUser={currentUser}
           catalog={catalog}
-          existingTickets={tickets}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={createTicket}
         />
       )}
+
+      {presenceRequest && (
+        <PresenceReasonModal
+          status={presenceRequest}
+          onClose={() => setPresenceRequest(null)}
+          onConfirm={confirmPresence}
+        />
+      )}
+
+      {criticalTicket && (
+        <CriticalAlert
+          ticket={criticalTicket}
+          onClose={() => setCriticalTicket(null)}
+          onAccept={() => handleTechnicianAction(criticalTicket.id, 'start')}
+        />
+      )}
+
+      {toast && <div className="app-toast-message">{toast}</div>}
     </div>
   );
 }
