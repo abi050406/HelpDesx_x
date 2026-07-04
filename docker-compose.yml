@@ -1,0 +1,27 @@
+
+
+services:
+  # Base de Datos de prueba para el desarrollo local
+  postgres:
+    image: postgres:16-alpine
+    container_name: nextgen-postgres-local
+    restart: always
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: nextgen_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Base de datos en memoria (Redis) para las sesiones rápidas en local
+  redis:
+    image: redis:7-alpine
+    container_name: nextgen-redis-local
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

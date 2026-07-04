@@ -1,0 +1,73 @@
+databases:
+  - name: nextgen-helpdesk-db
+    plan: free
+    databaseName: nextgen_dev
+    user: nextgen_user
+
+services:
+  # Backend (Node/Express + Socket.io)
+  - type: web
+    runtime: node
+    name: nextgen-helpdesk-backend
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: nextgen-helpdesk-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: nextgen-helpdesk-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: nextgen-helpdesk-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: nextgen-helpdesk-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: nextgen-helpdesk-db
+          property: password
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: nextgen-helpdesk-redis
+          property: connectionString
+      # Pega aquí las mismas claves VAPID que tienes en tu .env local
+      # (o genera unas nuevas con: npm run vapid:generate dentro de backend/)
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:helpdesk@localhost
+
+  # Redis (sesiones / presencia de técnicos)
+  - type: keyvalue
+    name: nextgen-helpdesk-redis
+    plan: free
+    ipAllowList: []
+
+  # Frontend (React, sitio estático)
+  - type: web
+    runtime: static
+    name: nextgen-helpdesk-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      # Después de que el backend quede desplegado, pega aquí su URL pública
+      # (ej: https://nextgen-helpdesk-backend.onrender.com) y vuelve a
+      # desplegar este servicio para que quede incrustada en el build.
+      - key: REACT_APP_API_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

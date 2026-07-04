@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE tickets ALTER COLUMN estado SET DEFAULT 'Abierto';
+
+COMMIT;
