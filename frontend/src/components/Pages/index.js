@@ -1,0 +1,12 @@
+export { default as TicketsPage } from './TicketsPage';
+export { default as TechniciansPage } from './TechniciansAssignmentPage';
+export { default as AssociatesPage } from './AssociatesPage';
+export { default as WikiPage } from './WikiPage';
+export { default as ReportsPage } from './ReportsPage';
+export { default as SettingsPage } from './SettingsPage';
+export { default as AuditLogPage } from './AuditLogPage';
+export { default as CreateTicketPage } from './CreateTicketPage';
+export { default as ProfilePage } from './ProfilePage';
+export { default as ChatPage } from './ChatPage';
+export { default as NewsPage } from './NewsPage';
+export { default as CategoriesPage } from './CategoriesPage';
