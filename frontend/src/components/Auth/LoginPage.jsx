@@ -1,46 +1,35 @@
 import React from 'react';
 
-export default function LoginPage({ credentials, onChange, onLogin, error, loading }) {
+// Asegúrate de que las props se llamen exactamente así:
+export default function LoginPage({ credentials, onChangeCredentials, onLogin, error, loading }) {
   return (
-    <div className="login-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: '#fff' }}>
-      <form onSubmit={onLogin} style={{ display: 'flex', flexDirection: 'column', width: '320px', padding: '2rem', borderRadius: '8px', backgroundColor: '#1e293b', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#38bdf8' }}>HelpDesk_X</h2>
+    <div className="login-container"> {/* Tus clases CSS originales se quedan igual */}
+      <form onSubmit={onLogin} className="login-form">
+        <h2>HelpDesk_X</h2>
         
-        {error && (
-          <div style={{ backgroundColor: '#ef444422', color: '#f87171', padding: '0.75rem', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.875rem', border: '1px solid #ef444444' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="error-message">{error}</div>}
 
-        <label style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#94a3b8' }}>Usuario</label>
+        <label>Usuario</label>
         <input
           type="text"
-          name="username" /* <-- Clave para mapear el estado dinámicamente */
+          name="username"
           value={credentials.username || ''}
-          onChange={onChange} /* <-- Provoca el error si no se pasa correctamente desde App.js */
+          onChange={(e) => onChangeCredentials({ ...credentials, username: e.target.value })} // Usa directamente la prop aquí
           disabled={loading}
-          placeholder="ej: bryan.mercado"
           required
-          style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', marginBottom: '1rem', outline: 'none' }}
         />
 
-        <label style={{ marginBottom: '0.5rem', fontSize: '0.875rem', color: '#94a3b8' }}>Contraseña</label>
+        <label>Contraseña</label>
         <input
           type="password"
-          name="password" /* <-- Clave para mapear el estado dinámicamente */
+          name="password"
           value={credentials.password || ''}
-          onChange={onChange} /* <-- Provoca el error si no se pasa correctamente desde App.js */
+          onChange={(e) => onChangeCredentials({ ...credentials, password: e.target.value })} // Usa directamente la prop aquí
           disabled={loading}
-          placeholder="••••••••"
           required
-          style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', marginBottom: '1.5rem', outline: 'none' }}
         />
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: '0.75rem', borderRadius: '4px', border: 'none', backgroundColor: loading ? '#64748b' : '#0284c7', color: '#fff', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s' }}
-        >
+        <button type="submit" disabled={loading}>
           {loading ? 'Cargando...' : 'Iniciar Sesión'}
         </button>
       </form>
